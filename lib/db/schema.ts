@@ -5,7 +5,6 @@ import {
   text,
   boolean,
   timestamp,
-  integer,
   jsonb,
   index,
   unique,
@@ -18,7 +17,6 @@ const timestamps = () => ({
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
 
-export const employeeRoleEnum = pgEnum("employee_role", ["owner", "dispatcher", "technician"]);
 export const serviceRequestCategoryEnum = pgEnum("service_request_category", [
   "repair", "maintenance_tune_up", "new_system_estimate", "warranty_callback",
 ]);
@@ -135,7 +133,6 @@ export const serviceRequests = pgTable("service_requests", {
   priority: requestPriorityEnum("priority").notNull().default("normal"),
   status: serviceRequestStatusEnum("status").notNull().default("open"),
   source: text("source").notNull().default("ai_call"),
-  createdByEmployeeId: uuid("created_by_employee_id").references(() => employees.id, { onDelete: "set null" }),
   ...timestamps(),
 }, (table) => [
   index("service_requests_status_idx").on(table.status, table.createdAt),
@@ -148,7 +145,7 @@ export const appointments = pgTable("appointments", {
   customerAddressId: uuid("customer_address_id").references(() => customerAddresses.id, { onDelete: "set null" }),
   serviceRequestId: uuid("service_request_id").references(() => serviceRequests.id, { onDelete: "set null" }),
   callId: uuid("call_id").references(() => calls.id, { onDelete: "set null" }),
-  assignedTechnicianId: uuid("assigned_technician_id").references(() => employees.id, { onDelete: "set null" }),
+  assignedTechnicianId: uuid("assigned_technician_id").references(() => technicians.id, { onDelete: "set null" }),
   requestedStartAt: timestamp("requested_start_at", { withTimezone: true }),
   requestedEndAt: timestamp("requested_end_at", { withTimezone: true }),
   scheduledStartAt: timestamp("scheduled_start_at", { withTimezone: true }),
@@ -157,9 +154,7 @@ export const appointments = pgTable("appointments", {
   calendarStatus: calendarBookingStatusEnum("calendar_status").notNull().default("not_started"),
   calendarEventId: text("calendar_event_id"),
   calendarProvider: text("calendar_provider"),
-  approvedByEmployeeId: uuid("approved_by_employee_id").references(() => employees.id, { onDelete: "set null" }),
   approvedAt: timestamp("approved_at", { withTimezone: true }),
-  rejectedByEmployeeId: uuid("rejected_by_employee_id").references(() => employees.id, { onDelete: "set null" }),
   rejectedAt: timestamp("rejected_at", { withTimezone: true }),
   rejectionReason: text("rejection_reason"),
   customerConfirmationSentAt: timestamp("customer_confirmation_sent_at", { withTimezone: true }),
