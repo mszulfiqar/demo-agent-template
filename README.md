@@ -1,6 +1,13 @@
 # Northstar HVAC Operations Dashboard
 
-A responsive HVAC AI customer-service operations dashboard prototype built with **Next.js 15**, **TypeScript**, **Tailwind CSS**, and **Lucide**.
+A responsive HVAC AI customer-service operations dashboard for **one HVAC business**, built with **Next.js 15**, **TypeScript**, **Tailwind CSS**, **Drizzle ORM**, and **Neon PostgreSQL**.
+
+## Single-business architecture
+
+This application serves one HVAC business. It is not a multi-tenant SaaS application:
+- No companies table or company_id columns.
+- Employees, customers, calls, service requests, and appointments belong to this one business.
+- The business profile is stored in a singleton `business_settings` row.
 
 ## Included screens
 
@@ -21,24 +28,26 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-## Appointment workflow in this prototype
+## Database
+
+The database schema is defined in `lib/db/schema.ts`. Generate and apply migrations with:
+
+```bash
+npm run db:generate
+npm run db:migrate
+```
+
+Set `DATABASE_URL` in your local `.env.local` file. Never commit credentials.
+
+## Appointment workflow
 
 1. The AI receptionist captures the customer's details, issue, and preferred appointment window.
 2. A new appointment request starts as `pending_approval`.
-3. The owner selects a technician and uses **Simulate approval**.
-4. The UI simulates a successful approval/calendar-booking outcome and changes the sample appointment to `confirmed`.
+3. The owner selects a technician and approves or rejects the request.
+4. Only after approval and successful calendar booking does the appointment become `confirmed` and the customer receive confirmation.
 
-The prototype does **not** create a real Google Calendar event or send a customer SMS. A production integration must only mark an appointment confirmed and notify the customer after the owner has approved it and the calendar booking has succeeded. Calendar booking failures must leave the appointment unconfirmed.
+Calendar booking failures must leave the appointment unconfirmed. The AI does not select technicians or confirm appointments.
 
-## Demo limitations
+## Current prototype limitations
 
-All records are seeded sample data. Interactions are local to the browser session and reset on refresh. There is currently:
-
-- No authentication or role management
-- No database or API
-- No LiveKit integration
-- No Google Calendar integration
-- No SMS provider integration
-- No technician management/settings screens
-
-Technician names are seeded only for the appointment assignment dropdown.
+The dashboard screens still use sample data until their API routes and database queries are implemented. There is currently no authentication, LiveKit integration, Google Calendar integration, or SMS provider integration.
