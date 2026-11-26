@@ -9,7 +9,6 @@ import {
   jsonb,
   index,
   unique,
-  uniqueIndex,
   check,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
@@ -42,29 +41,28 @@ export const calendarBookingStatusEnum = pgEnum("calendar_booking_status", [
   "not_started", "pending", "booked", "failed", "cancelled",
 ]);
 
-export const companies = pgTable("companies", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull(),
-  slug: text("slug").notNull().unique(),
+// This is a single-business application. This singleton row stores the HVAC
+// business profile; it is not a tenant or a company-scoping mechanism.
+export const businessSettings = pgTable("business_settings", {
+  id: integer("id").primaryKey().default(1),
+  businessName: text("business_name").notNull(),
   businessPhone: text("business_phone"),
   businessEmail: text("business_email"),
   timezone: text("timezone").notNull().default("America/Chicago"),
   ...timestamps(),
-});
+}, (table) => [
+  check("business_settings_singleton_id", sql`${table.id} = 1`),
+]);
 
 export const employees = pgTable("employees", {
   id: uuid("id").primaryKey().defaultRandom(),
-  companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
   fullName: text("full_name").notNull(),
-  email: text("email").notNull(),
+  email: text("email").notNull().unique(),
   phone: text("phone"),
   authUserId: text("auth_user_id").unique(),
   isActive: boolean("is_active").notNull().default(true),
   ...timestamps(),
-}, (table) => [
-  unique("employees_company_email_unique").on(table.companyId, table.email),
-  index("employees_company_idx").on(table.companyId),
-]);
+});
 
 export const employeeRoles = pgTable("employee_roles", {
   employeeId: uuid("employee_id").notNull().references(() => employees.id, { onDelete: "cascade" }),
@@ -75,21 +73,18 @@ export const employeeRoles = pgTable("employee_roles", {
 
 export const customers = pgTable("customers", {
   id: uuid("id").primaryKey().defaultRandom(),
-  companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
-  phone: text("phone").notNull(),
+  phone: text("phone").notNull().unique(),
   email: text("email"),
   notes: text("notes"),
   ...timestamps(),
 }, (table) => [
-  unique("customers_company_phone_unique").on(table.companyId, table.phone),
-  index("customers_company_name_idx").on(table.companyId, table.lastName, table.firstName),
+  index("customers_name_idx").on(table.lastName, table.firstName),
 ]);
 
 export const customerAddresses = pgTable("customer_addresses", {
   id: uuid("id").primaryKey().defaultRandom(),
-  companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
   customerId: uuid("customer_id").notNull().references(() => customers.id, { onDelete: "cascade" }),
   label: text("label").notNull().default("Primary"),
   addressLine1: text("address_line1").notNull(),
@@ -101,16 +96,15 @@ export const customerAddresses = pgTable("customer_addresses", {
   isDefault: boolean("is_default").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
-  index("customer_addresses_customer_idx").on(table.companyId, table.customerId),
+  index("customer_addresses_customer_idx").on(table.customerId),
 ]);
 
 export const calls = pgTable("calls", {
   id: uuid("id").primaryKey().defaultRandom(),
-  companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
   customerId: uuid("customer_id").references(() => customers.id, { onDelete: "set null" }),
   livekitRoomName: text("livekit_room_name"),
   livekitParticipantIdentity: text("livekit_participant_identity"),
-  providerCallId: text("provider_call_id"),
+  providerCallId: text("provider_call_id").unique(),
   direction: callDirectionEnum("direction").notNull().default("inbound"),
   status: callStatusEnum("status").notNull().default("queued"),
   outcome: callOutcomeEnum("outcome"),
@@ -125,15 +119,13 @@ export const calls = pgTable("calls", {
   recordingUrl: text("recording_url"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
-  unique("calls_company_provider_call_unique").on(table.companyId, table.providerCallId),
-  index("calls_company_created_idx").on(table.companyId, table.createdAt),
-  index("calls_customer_idx").on(table.companyId, table.customerId),
+  index("calls_created_idx").on(table.createdAt),
+  index("calls_customer_idx").on(table.customerId),
   check("calls_duration_nonnegative", sql`${table.durationSeconds} IS NULL OR ${table.durationSeconds} >= 0`),
 ]);
 
 export const serviceRequests = pgTable("service_requests", {
   id: uuid("id").primaryKey().defaultRandom(),
-  companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
   customerId: uuid("customer_id").notNull().references(() => customers.id, { onDelete: "restrict" }),
   customerAddressId: uuid("customer_address_id").references(() => customerAddresses.id, { onDelete: "set null" }),
   callId: uuid("call_id").references(() => calls.id, { onDelete: "set null" }),
@@ -146,13 +138,12 @@ export const serviceRequests = pgTable("service_requests", {
   createdByEmployeeId: uuid("created_by_employee_id").references(() => employees.id, { onDelete: "set null" }),
   ...timestamps(),
 }, (table) => [
-  index("service_requests_company_status_idx").on(table.companyId, table.status, table.createdAt),
-  index("service_requests_customer_idx").on(table.companyId, table.customerId),
+  index("service_requests_status_idx").on(table.status, table.createdAt),
+  index("service_requests_customer_idx").on(table.customerId),
 ]);
 
 export const appointments = pgTable("appointments", {
   id: uuid("id").primaryKey().defaultRandom(),
-  companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
   customerId: uuid("customer_id").notNull().references(() => customers.id, { onDelete: "restrict" }),
   customerAddressId: uuid("customer_address_id").references(() => customerAddresses.id, { onDelete: "set null" }),
   serviceRequestId: uuid("service_request_id").references(() => serviceRequests.id, { onDelete: "set null" }),
@@ -176,9 +167,9 @@ export const appointments = pgTable("appointments", {
   internalNotes: text("internal_notes"),
   ...timestamps(),
 }, (table) => [
-  index("appointments_company_status_date_idx").on(table.companyId, table.status, table.scheduledStartAt),
-  index("appointments_technician_date_idx").on(table.companyId, table.assignedTechnicianId, table.scheduledStartAt),
-  index("appointments_customer_idx").on(table.companyId, table.customerId),
+  index("appointments_status_date_idx").on(table.status, table.scheduledStartAt),
+  index("appointments_technician_date_idx").on(table.assignedTechnicianId, table.scheduledStartAt),
+  index("appointments_customer_idx").on(table.customerId),
   check("appointments_requested_range_valid", sql`${table.requestedEndAt} IS NULL OR ${table.requestedStartAt} IS NULL OR ${table.requestedEndAt} > ${table.requestedStartAt}`),
   check("appointments_scheduled_range_valid", sql`${table.scheduledEndAt} IS NULL OR ${table.scheduledStartAt} IS NULL OR ${table.scheduledEndAt} > ${table.scheduledStartAt}`),
   check("appointments_confirmed_requires_calendar_booking", sql`${table.status} <> 'confirmed' OR (${table.calendarStatus} = 'booked' AND ${table.calendarEventId} IS NOT NULL AND ${table.assignedTechnicianId} IS NOT NULL)`),
@@ -186,11 +177,10 @@ export const appointments = pgTable("appointments", {
 
 export const callEvents = pgTable("call_events", {
   id: uuid("id").primaryKey().defaultRandom(),
-  companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
   callId: uuid("call_id").notNull().references(() => calls.id, { onDelete: "cascade" }),
   eventType: text("event_type").notNull(),
   details: jsonb("details").notNull().default({}),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
-  index("call_events_call_idx").on(table.companyId, table.callId, table.createdAt),
+  index("call_events_call_idx").on(table.callId, table.createdAt),
 ]);
