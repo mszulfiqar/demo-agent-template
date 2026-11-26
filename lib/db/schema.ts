@@ -16,7 +16,7 @@ import { sql } from "drizzle-orm";
 
 const timestamps = () => ({
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
 
 export const employeeRoleEnum = pgEnum("employee_role", ["owner", "dispatcher", "technician"]);
