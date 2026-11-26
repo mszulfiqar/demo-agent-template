@@ -14,10 +14,10 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
-const timestamps = {
+const timestamps = () => ({
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-};
+});
 
 export const employeeRoleEnum = pgEnum("employee_role", ["owner", "dispatcher", "technician"]);
 export const serviceRequestCategoryEnum = pgEnum("service_request_category", [
@@ -49,7 +49,7 @@ export const companies = pgTable("companies", {
   businessPhone: text("business_phone"),
   businessEmail: text("business_email"),
   timezone: text("timezone").notNull().default("America/Chicago"),
-  ...timestamps,
+  ...timestamps(),
 });
 
 export const employees = pgTable("employees", {
@@ -60,7 +60,7 @@ export const employees = pgTable("employees", {
   phone: text("phone"),
   authUserId: text("auth_user_id").unique(),
   isActive: boolean("is_active").notNull().default(true),
-  ...timestamps,
+  ...timestamps(),
 }, (table) => [
   unique("employees_company_email_unique").on(table.companyId, table.email),
   index("employees_company_idx").on(table.companyId),
@@ -81,7 +81,7 @@ export const customers = pgTable("customers", {
   phone: text("phone").notNull(),
   email: text("email"),
   notes: text("notes"),
-  ...timestamps,
+  ...timestamps(),
 }, (table) => [
   unique("customers_company_phone_unique").on(table.companyId, table.phone),
   index("customers_company_name_idx").on(table.companyId, table.lastName, table.firstName),
@@ -144,7 +144,7 @@ export const serviceRequests = pgTable("service_requests", {
   status: serviceRequestStatusEnum("status").notNull().default("open"),
   source: text("source").notNull().default("ai_call"),
   createdByEmployeeId: uuid("created_by_employee_id").references(() => employees.id, { onDelete: "set null" }),
-  ...timestamps,
+  ...timestamps(),
 }, (table) => [
   index("service_requests_company_status_idx").on(table.companyId, table.status, table.createdAt),
   index("service_requests_customer_idx").on(table.companyId, table.customerId),
@@ -174,7 +174,7 @@ export const appointments = pgTable("appointments", {
   customerConfirmationSentAt: timestamp("customer_confirmation_sent_at", { withTimezone: true }),
   source: text("source").notNull().default("ai_receptionist"),
   internalNotes: text("internal_notes"),
-  ...timestamps,
+  ...timestamps(),
 }, (table) => [
   index("appointments_company_status_date_idx").on(table.companyId, table.status, table.scheduledStartAt),
   index("appointments_technician_date_idx").on(table.companyId, table.assignedTechnicianId, table.scheduledStartAt),
