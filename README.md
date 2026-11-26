@@ -52,3 +52,33 @@ Calendar booking failures must leave the appointment unconfirmed. The AI does no
 ## Current prototype limitations
 
 The dashboard screens still use sample data until their API routes and database queries are implemented. There is currently no authentication, LiveKit integration, Google Calendar integration, or SMS provider integration.
+
+## Background workflows (Inngest)
+
+Inngest runs durable background functions separately from the normal request/response work handled by Next.js. The app exposes its functions at `/api/inngest`.
+
+Currently registered workflows:
+- `app/test.background-job` — verifies that the Inngest endpoint can execute a function.
+- `hvac/appointment.approved` — triggered after an owner approves an appointment. It currently records the workflow start; Google Calendar booking and customer SMS are not implemented yet.
+
+### Local setup
+
+Install dependencies and start the Next.js app:
+
+```bash
+npm install
+```
+
+For local development with the Inngest Dev Server, add this to `.env.local`:
+
+```env
+INNGEST_DEV=1
+```
+
+In a second terminal, install and run the Inngest CLI using the official instructions at https://www.inngest.com/docs/getting-started/nextjs-quick-start. Open http://localhost:8288, connect the app endpoint at http://localhost:3000/api/inngest, and invoke the test function from the Dev Server UI.
+
+### Vercel deployment
+
+Connect the Vercel project to Inngest using the official Inngest Vercel integration. It configures the event/signing keys and syncs deployed functions. Do not commit Inngest keys to Git. After deployment, confirm the app is synced and both functions appear in the Inngest dashboard.
+
+Appointment approvals remain `pending_calendar`; the current background function does not confirm appointments or send customer messages. Those actions must be added only after Google Calendar and SMS providers are configured and their success is verified.
