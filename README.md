@@ -6,8 +6,9 @@ A responsive HVAC AI customer-service operations dashboard for **one HVAC busine
 
 This application serves one HVAC business. It is not a multi-tenant SaaS application:
 - No companies table or company_id columns.
-- Employees, customers, calls, service requests, and appointments belong to this one business.
-- The business profile is stored in a singleton `business_settings` row.
+- Technician profiles, customers, calls, service requests, and appointments belong to this one business.
+- Business details are hardcoded in application code; there is no business-settings table.
+- Only technician profiles are managed in the dashboard. There is no general employee or role-management system.
 
 ## Included screens
 
