@@ -5,6 +5,7 @@ import {
   text,
   boolean,
   timestamp,
+  integer,
   jsonb,
   index,
   unique,
@@ -39,35 +40,15 @@ export const calendarBookingStatusEnum = pgEnum("calendar_booking_status", [
   "not_started", "pending", "booked", "failed", "cancelled",
 ]);
 
-// This is a single-business application. This singleton row stores the HVAC
-// business profile; it is not a tenant or a company-scoping mechanism.
-export const businessSettings = pgTable("business_settings", {
-  id: integer("id").primaryKey().default(1),
-  businessName: text("business_name").notNull(),
-  businessPhone: text("business_phone"),
-  businessEmail: text("business_email"),
-  timezone: text("timezone").notNull().default("America/Chicago"),
-  ...timestamps(),
-}, (table) => [
-  check("business_settings_singleton_id", sql`${table.id} = 1`),
-]);
-
-export const employees = pgTable("employees", {
+// This application manages technician profiles only. Business details are hardcoded.
+export const technicians = pgTable("technicians", {
   id: uuid("id").primaryKey().defaultRandom(),
   fullName: text("full_name").notNull(),
-  email: text("email").notNull().unique(),
+  email: text("email").unique(),
   phone: text("phone"),
-  authUserId: text("auth_user_id").unique(),
   isActive: boolean("is_active").notNull().default(true),
   ...timestamps(),
 });
-
-export const employeeRoles = pgTable("employee_roles", {
-  employeeId: uuid("employee_id").notNull().references(() => employees.id, { onDelete: "cascade" }),
-  role: employeeRoleEnum("role").notNull(),
-}, (table) => [
-  unique("employee_roles_pk").on(table.employeeId, table.role),
-]);
 
 export const customers = pgTable("customers", {
   id: uuid("id").primaryKey().defaultRandom(),
