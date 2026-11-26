@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { appointments, technicians } from "@/lib/db/schema";
+import { inngest } from "@/inngest/client";
 
 export const runtime = "nodejs";
 type Context = { params: Promise<{ id: string }> };
@@ -32,15 +33,34 @@ export async function PATCH(request: Request, { params }: Context) {
     }
 
     if (action === "approve") {
-      if (current.status !== "pending_approval") return NextResponse.json({ error: "Only requests awaiting approval can be approved." }, { status: 409 });
-      const [updated] = await db.update(appointments).set({
-        assignedTechnicianId: technicianId,
-        status: "pending_calendar",
-        calendarStatus: "pending",
-        approvedAt: new Date(),
-        updatedAt: new Date(),
-      }).where(eq(appointments.id, id)).returning();
-      return NextResponse.json({ appointment: updated, message: "Owner approval saved. Appointment remains unconfirmed until Google Calendar booking succeeds." });
+      if (current.status !== "pending_approval" && current.status !== "pending_calendar") {
+        return NextResponse.json({ error: "Only requests awaiting approval or calendar processing can be approved." }, { status: 409 });
+      }
+      const [updated] = current.status === "pending_approval"
+        ? await db.update(appointments).set({
+            assignedTechnicianId: technicianId,
+            status: "pending_calendar",
+            calendarStatus: "pending",
+            approvedAt: new Date(),
+            updatedAt: new Date(),
+          }).where(eq(appointments.id, id)).returning()
+        : [current];
+
+      await inngest.send({
+        id: "appointment-approved-" + id,
+        name: "hvac/appointment.approved",
+        data: {
+          appointmentId: updated.id,
+          technicianId: updated.assignedTechnicianId,
+          requestedStartAt: updated.requestedStartAt?.toISOString() ?? null,
+          requestedEndAt: updated.requestedEndAt?.toISOString() ?? null,
+        },
+      });
+
+      return NextResponse.json({
+        appointment: updated,
+        message: "Owner approval saved and background workflow triggered. Appointment remains unconfirmed until Google Calendar booking succeeds.",
+      });
     }
 
     return NextResponse.json({ error: "Unsupported appointment action." }, { status: 400 });
