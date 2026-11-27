@@ -68,6 +68,7 @@ export async function POST(request: Request) {
     const requiredSkill = ["repair", "maintenance", "installation"].includes(appointmentType) ? appointmentType : null;
     const check = await checkTechnicianAvailability(technicianId, start, end, undefined, appointmentType === "emergency", { postalCode: address?.postalCode, requiredSkill });
     if (!check.ok) return NextResponse.json({ error: check.reason }, { status: 409 });
+    if (check.warnings.length && body.overrideWarnings !== true) return NextResponse.json({ warnings: check.warnings, requiresOverride: true }, { status: 409 });
     const [created] = await db.insert(appointments).values({
       customerId, customerAddressId: address?.id ?? null, assignedTechnicianId: technicianId,
       requestedStartAt: start, requestedEndAt: end,
