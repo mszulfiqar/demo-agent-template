@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { appointments, technicians } from "@/lib/db/schema";
+import { appointments, technicians, customerAddresses } from "@/lib/db/schema";
 import { checkTechnicianAvailability } from "@/lib/scheduling";
 import { inngest } from "@/inngest/client";
 
@@ -32,7 +32,9 @@ export async function PATCH(request: Request, { params }: Context) {
       const start = current.scheduledStartAt ?? current.requestedStartAt;
       const end = current.scheduledEndAt ?? current.requestedEndAt;
       if (start && end) {
-        const check = await checkTechnicianAvailability(technicianId, start, end, id, current.appointmentType === "emergency");
+        const [address] = current.customerAddressId ? await db.select().from(customerAddresses).where(eq(customerAddresses.id, current.customerAddressId)).limit(1) : [null];
+        const requiredSkill = ["repair", "maintenance", "installation"].includes(current.appointmentType) ? current.appointmentType : null;
+        const check = await checkTechnicianAvailability(technicianId, start, end, id, current.appointmentType === "emergency", { postalCode: address?.postalCode, requiredSkill });
         if (!check.ok) return NextResponse.json({ error: check.reason }, { status: 409 });
       }
       const [updated] = await db.update(appointments).set({ assignedTechnicianId: technicianId, updatedAt: new Date() }).where(eq(appointments.id, id)).returning();
