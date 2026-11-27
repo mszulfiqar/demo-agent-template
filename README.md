@@ -43,9 +43,9 @@ Set `DATABASE_URL` in your local `.env.local` file. Never commit credentials.
 ## Appointment workflow
 
 1. The AI receptionist captures the customer's details, issue, and preferred appointment window. AI-created requests start as `pending_approval`.
-2. The owner reviews the request, selects a technician and time, and approves or rejects it. The system checks working hours, exceptions, skills, service ZIP coverage, and overlapping appointments. A successful approval changes the appointment directly to `confirmed` in the internal dispatch calendar.
-3. Appointments created directly by the owner in the dashboard require a customer, technician, start time, and end time. After the same availability checks pass, they are created immediately as `confirmed` without a second approval.
-4. The internal dispatch calendar is the scheduling source of truth. Google Calendar is not part of the scheduling workflow. The AI never selects technicians or confirms appointments.
+2. The owner reviews the request, selects a technician and time, and approves or rejects it. The system blocks actual overlapping appointments and approved time off. Working-hour, break, skill, and service ZIP mismatches are shown as warnings that the owner can override. A successful approval changes the appointment directly to `confirmed` in the internal dispatch calendar.
+3. Appointments created directly by the owner in the dashboard require a customer, technician, start time, and end time. After hard conflicts are checked and any soft warnings are accepted by the owner, they are created immediately as `confirmed` without a second approval.
+4. The internal dispatch calendar is the scheduling source of truth. Owners manually choose the technician and appointment time; there is no automatic Find a Time or technician assignment. Breaks and normal hours are advisory, while real job overlaps and approved time off remain hard blocks. Google Calendar is not part of the scheduling workflow. The AI never selects technicians or confirms appointments.
 
 ## Current prototype limitations
 
