@@ -3,7 +3,6 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { appointments, technicians, customerAddresses } from "@/lib/db/schema";
 import { checkTechnicianAvailability } from "@/lib/scheduling";
-import { inngest } from "@/inngest/client";
 
 export const runtime = "nodejs";
 type Context = { params: Promise<{ id: string }> };
@@ -52,30 +51,19 @@ export async function PATCH(request: Request, { params }: Context) {
       const requiredSkill = ["repair", "maintenance", "installation"].includes(current.appointmentType) ? current.appointmentType : null;
       const check = await checkTechnicianAvailability(technicianId, start, end, id, current.appointmentType === "emergency", { postalCode: address?.postalCode, requiredSkill });
       if (!check.ok) return NextResponse.json({ error: check.reason }, { status: 409 });
-      const [updated] = current.status === "pending_approval"
-        ? await db.update(appointments).set({
-            assignedTechnicianId: technicianId,
-            status: "pending_calendar",
-            calendarStatus: "pending",
-            approvedAt: new Date(),
-            updatedAt: new Date(),
-          }).where(eq(appointments.id, id)).returning()
-        : [current];
-
-      await inngest.send({
-        id: "appointment-approved-" + id,
-        name: "hvac/appointment.approved",
-        data: {
-          appointmentId: updated.id,
-          technicianId: updated.assignedTechnicianId,
-          requestedStartAt: updated.requestedStartAt?.toISOString() ?? null,
-          requestedEndAt: updated.requestedEndAt?.toISOString() ?? null,
-        },
-      });
+      const [updated] = await db.update(appointments).set({
+        assignedTechnicianId: technicianId,
+        scheduledStartAt: start,
+        scheduledEndAt: end,
+        status: "confirmed",
+        calendarStatus: "not_started",
+        approvedAt: new Date(),
+        updatedAt: new Date(),
+      }).where(eq(appointments.id, id)).returning();
 
       return NextResponse.json({
         appointment: updated,
-        message: "Owner approval saved and background workflow triggered. Appointment remains unconfirmed until Google Calendar booking succeeds.",
+        message: "Appointment approved, scheduled and confirmed in the dispatch calendar.",
       });
     }
 
