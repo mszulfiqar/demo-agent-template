@@ -76,13 +76,20 @@ export default function AppointmentsPage() {
     if (action !== "reject" && !technicianId) { setError("Please assign an active technician first."); return; }
     setBusyId(id); setError(""); setNotice("");
     try {
-      const response = await fetch(`/api/appointments/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, technicianId }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Unable to update appointment.");
+      const send = async (overrideWarnings: boolean) => {
+        const response = await fetch(`/api/appointments/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action, technicianId, overrideWarnings }),
+        });
+        return { response, data: await response.json() };
+      };
+      let result = await send(false);
+      if (result.response.status === 409 && result.data.requiresOverride) {
+        if (!window.confirm((result.data.warnings || []).join("\\n") + "\\n\\nContinue and approve this appointment anyway?")) return;
+        result = await send(true);
+      }
+      if (!result.response.ok) throw new Error(result.data.error || "Unable to update appointment.");
       await loadData();
       setNotice(action === "approve"
         ? "Appointment approved, scheduled and confirmed."
