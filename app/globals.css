@@ -296,3 +296,51 @@ tbody tr:hover { background: #fcfdfd; }
 .modal-actions button:disabled{opacity:.6;cursor:wait}
 .form-error{padding:10px 12px;border-radius:8px;background:#fff1f0;color:#b42318;font-size:13px;margin:12px 0}
 @media(max-width:640px){.modal-card{padding:18px}.modal-actions{flex-wrap:wrap}.modal-actions button{flex:1}}
+
+
+/* Technician weekly schedule */
+.schedule-toolbar { padding: 17px 19px; display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 14px; }
+.schedule-toolbar > div:first-child { display: grid; gap: 7px; min-width: 230px; }
+.schedule-field-label { color: #99a4ab; font-size: 8px; letter-spacing: .8px; font-weight: 800; }
+.schedule-toolbar select { height: 37px; border: 1px solid #e2e9eb; border-radius: 7px; padding: 0 10px; background: #fff; color: #34434d; font-size: 11px; min-width: 240px; }
+.schedule-summary { display: flex; gap: 16px; color: #74828b; font-size: 10px; }
+.schedule-summary span { display: inline-flex; align-items: center; gap: 6px; }
+.schedule-summary svg { color: #16867d; }
+.weekly-schedule-list { display: grid; gap: 10px; }
+.weekly-day-card { background: #fff; border: 1px solid #e9eef1; border-radius: 10px; padding: 15px 17px; box-shadow: 0 4px 16px rgba(26,42,52,.02); }
+.weekly-day-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 13px; }
+.weekly-day-heading strong, .weekly-day-heading small { display: block; }
+.weekly-day-heading strong { color: #34434d; font-size: 12px; }
+.weekly-day-heading small { color: #9aa5ad; font-size: 9px; margin-top: 3px; }
+.weekly-day-fields { display: grid; grid-template-columns: repeat(4,minmax(100px,1fr)); gap: 10px; }
+.weekly-day-fields label, .oncall-times label { display: grid; gap: 6px; color: #87939b; font-size: 9px; font-weight: 650; }
+.weekly-day-fields input, .oncall-times input { height: 34px; min-width: 0; border: 1px solid #e4eaed; border-radius: 6px; padding: 0 9px; color: #46555f; background: #fff; font-size: 10px; }
+.weekly-day-fields input:disabled { background: #f6f8f8; color: #aab3b8; }
+.disabled-fields { opacity: .62; }
+.switch-label { display: inline-flex; align-items: center; gap: 7px; color: #687781; font-size: 10px; cursor: pointer; white-space: nowrap; }
+.switch-label input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.switch-track { width: 30px; height: 17px; border-radius: 20px; background: #dce3e6; position: relative; transition: .15s ease; }
+.switch-track:after { content: ""; position: absolute; width: 11px; height: 11px; border-radius: 50%; background: #fff; left: 3px; top: 3px; transition: .15s ease; box-shadow: 0 1px 2px #0002; }
+.switch-label input:checked + .switch-track { background: #168b78; }
+.switch-label input:checked + .switch-track:after { transform: translateX(13px); }
+.switch-label input:focus-visible + .switch-track { outline: 2px solid #68b8ae; outline-offset: 2px; }
+.oncall-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid #f0f3f4; margin-top: 14px; padding-top: 12px; }
+.oncall-copy { display: flex; align-items: center; gap: 9px; color: #d28a40; }
+.oncall-copy strong, .oncall-copy small { display: block; }
+.oncall-copy strong { color: #53616a; font-size: 10px; }
+.oncall-copy small { color: #9aa5ad; font-size: 9px; margin-top: 3px; }
+.oncall-switch input:checked + .switch-track { background: #d58b3c; }
+.oncall-times { display: flex; gap: 10px; max-width: 420px; margin: 12px 0 0 auto; }
+.oncall-times label { flex: 1; }
+.schedule-footnote { display: flex; align-items: flex-start; gap: 9px; color: #8c989f; font-size: 9px; line-height: 1.6; margin-top: 17px; padding: 12px 14px; background: #f0f6f5; border-radius: 8px; }
+.schedule-footnote svg { color: #16867d; flex: 0 0 auto; margin-top: 1px; }
+.schedule-success { padding: 10px 12px; background: #edf8f2; color: #237a5c; border: 1px solid #d9eee2; border-radius: 7px; font-size: 10px; margin-bottom: 12px; }
+@media (max-width: 850px) {
+  .schedule-toolbar { align-items: stretch; flex-direction: column; }
+  .schedule-summary { flex-wrap: wrap; }
+  .weekly-day-fields { grid-template-columns: repeat(2,minmax(100px,1fr)); }
+}
+@media (max-width: 520px) {
+  .weekly-day-fields { grid-template-columns: 1fr 1fr; }
+  .oncall-times { margin-left: 0; }
+}
