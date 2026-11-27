@@ -27,7 +27,7 @@ type Appointment = {
 };
 type Technician = { id: string; fullName: string; isActive: boolean };
 
-const filters = [["all", "All"], ["pending_approval", "Needs approval"], ["pending_calendar", "Awaiting calendar"], ["confirmed", "Confirmed"], ["completed", "Completed"], ["rejected", "Rejected"]] as const;
+const filters = [["all", "All"], ["pending_approval", "Needs approval"], ["confirmed", "Confirmed"], ["completed", "Completed"], ["rejected", "Rejected"], ["cancelled", "Cancelled"]] as const;
 
 function formatDate(value: string | null) {
   if (!value) return "Date not selected";
@@ -85,7 +85,7 @@ export default function AppointmentsPage() {
       if (!response.ok) throw new Error(data.error || "Unable to update appointment.");
       await loadData();
       setNotice(action === "approve"
-        ? "Owner approval saved. This appointment is still unconfirmed until calendar booking succeeds."
+        ? "Appointment approved, scheduled and confirmed."
         : action === "reject" ? "Appointment request rejected." : "Technician assignment saved.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to update appointment.");
@@ -93,8 +93,8 @@ export default function AppointmentsPage() {
   }
 
   return <div>
-    <PageHeading eyebrow="SCHEDULING" title="Appointments" description="Review appointment requests, assign a technician, and approve the schedule." action={<div className="heading-count"><CalendarDays size={17}/>{items.filter(item => item.status === "pending_approval").length} awaiting review</div>}/>
-    <div className="notice-banner"><div className="notice-symbol"><Clock3 size={18}/></div><div><strong>Approval does not mean confirmed</strong><p>After owner approval, the request moves to Awaiting calendar. It becomes confirmed only after Google Calendar booking succeeds. Customer confirmation is not sent from this page yet.</p></div></div>
+    <PageHeading eyebrow="SCHEDULING" title="Appointments" description="Review AI appointment requests and approve them into your internal dispatch schedule." action={<div className="heading-count"><CalendarDays size={17}/>{items.filter(item => item.status === "pending_approval").length} awaiting review</div>}/>
+    <div className="notice-banner"><div className="notice-symbol"><Clock3 size={18}/></div><div><strong>AI requests need owner approval</strong><p>Choose a technician and approve the request. The system checks availability and then confirms the job in your dispatch calendar. Jobs created directly from the dispatch calendar are confirmed immediately.</p></div></div>
     <div className="toolbar"><div className="tabs">{filters.map(([key, label]) => <button key={key} className={filter === key ? "tab active" : "tab"} onClick={() => setFilter(key)}>{label}{key === "pending_approval" && <b>{items.filter(item => item.status === key).length}</b>}</button>)}</div><label className="search-box"><Search size={16}/><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search appointments"/></label></div>
     {error && <div className="form-error" role="alert">{error}</div>}
     {notice && <div className="notice-banner"><div className="notice-symbol"><Check size={18}/></div><div><strong>Update saved</strong><p>{notice}</p></div></div>}
@@ -114,7 +114,7 @@ export default function AppointmentsPage() {
         {item.status === "pending_approval" ? <div className="appointment-actions">
           <label className="assign-select"><UserRound size={15}/><select value={selectedTechnician} onChange={event => setAssignments(current => ({ ...current, [item.id]: event.target.value }))}><option value="">Assign technician</option>{technicians.map(technician => <option key={technician.id} value={technician.id}>{technician.fullName}</option>)}</select></label>
           <div className="action-buttons"><button className="button" disabled={busyId === item.id} onClick={() => updateAppointment(item.id, "approve")}><Check size={15}/>{busyId === item.id ? "Saving…" : "Approve request"}</button><button className="button button-secondary" disabled={busyId === item.id} onClick={() => updateAppointment(item.id, "reject")}><X size={15}/> Reject</button></div>
-        </div> : item.status === "pending_calendar" ? <div className="assigned-tech"><div className="tech-avatar">{item.technicianName?.split(" ").map(part => part[0]).join("") || "—"}</div><div><small>Assigned technician · Calendar booking pending</small><strong>{item.technicianName || "Not assigned"}</strong></div></div> : <div className="assigned-tech"><div className="tech-avatar">{item.technicianName?.split(" ").map(part => part[0]).join("") || "—"}</div><div><small>Assigned technician</small><strong>{item.technicianName || "Not assigned"}</strong></div></div>}
+        </div> : <div className="assigned-tech"><div className="tech-avatar">{item.technicianName?.split(" ").map(part => part[0]).join("") || "—"}</div><div><small>Assigned technician</small><strong>{item.technicianName || "Not assigned"}</strong></div></div>}
       </article>;
     })}</div>
     {loading && <div className="empty-state">Loading appointments…</div>}
