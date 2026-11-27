@@ -42,12 +42,10 @@ Set `DATABASE_URL` in your local `.env.local` file. Never commit credentials.
 
 ## Appointment workflow
 
-1. The AI receptionist captures the customer's details, issue, and preferred appointment window.
-2. A new appointment request starts as `pending_approval`.
-3. The owner selects a technician and approves or rejects the request.
-4. Only after approval and successful calendar booking does the appointment become `confirmed` and the customer receive confirmation.
-
-Calendar booking failures must leave the appointment unconfirmed. The AI does not select technicians or confirm appointments.
+1. The AI receptionist captures the customer's details, issue, and preferred appointment window. AI-created requests start as `pending_approval`.
+2. The owner reviews the request, selects a technician and time, and approves or rejects it. The system blocks actual overlapping appointments and approved time off. Working-hour, break, skill, and service ZIP mismatches are shown as warnings that the owner can override. A successful approval changes the appointment directly to `confirmed` in the internal dispatch calendar.
+3. Appointments created directly by the owner in the dashboard require a customer, technician, start time, and end time. After hard conflicts are checked and any soft warnings are accepted by the owner, they are created immediately as `confirmed` without a second approval.
+4. The internal dispatch calendar is the scheduling source of truth. Owners manually choose the technician and appointment time; there is no automatic Find a Time or technician assignment. Breaks and normal hours are advisory, while real job overlaps and approved time off remain hard blocks. Google Calendar is not part of the scheduling workflow. The AI never selects technicians or confirms appointments.
 
 ## Current prototype limitations
 
@@ -59,7 +57,7 @@ Inngest runs durable background functions separately from the normal request/res
 
 Currently registered workflows:
 - `app/test.background-job` — verifies that the Inngest endpoint can execute a function.
-- `hvac/appointment.approved` — triggered after an owner approves an appointment. It currently records the workflow start; Google Calendar booking and customer SMS are not implemented yet.
+
 
 ### Local setup
 
@@ -81,4 +79,4 @@ In a second terminal, install and run the Inngest CLI using the official instruc
 
 Connect the Vercel project to Inngest using the official Inngest Vercel integration. It configures the event/signing keys and syncs deployed functions. Do not commit Inngest keys to Git. After deployment, confirm the app is synced and both functions appear in the Inngest dashboard.
 
-Appointment approvals remain `pending_calendar`; the current background function does not confirm appointments or send customer messages. Those actions must be added only after Google Calendar and SMS providers are configured and their success is verified.
+Appointment scheduling is handled directly by the application and Neon database. Inngest remains available for future durable background tasks; it is not required to confirm an appointment.

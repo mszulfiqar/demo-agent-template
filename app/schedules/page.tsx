@@ -81,7 +81,7 @@ export default function SchedulesPage() {
   const onCallCount = useMemo(() => days.filter(d => d.isOnCall).length, [days]);
 
   return <div>
-    <PageHeading eyebrow="TECHNICIAN SCHEDULING" title="Technician Schedules" description="Set recurring working hours, breaks, and emergency on-call coverage." action={<button className="button button-primary" onClick={save} disabled={!selectedId || saving}><Save size={16}/>{saving ? "Saving…" : "Save schedule"}</button>} />
+    <PageHeading eyebrow="TECHNICIAN SCHEDULING" title="Technician Schedules" description="Set regular workdays, optional hours, optional breaks, and emergency on-call coverage." action={<button className="button button-primary" onClick={save} disabled={!selectedId || saving}><Save size={16}/>{saving ? "Saving…" : "Save schedule"}</button>} />
     <div className="schedule-toolbar panel">
       <div><span className="schedule-field-label">TECHNICIAN</span><select value={selectedId} onChange={e => void changeTechnician(e.target.value)} disabled={loading || technicians.length === 0}>{technicians.map(t => <option key={t.id} value={t.id}>{t.fullName}{t.isActive ? "" : " (Inactive)"}</option>)}</select></div>
       <div className="schedule-summary"><span><Clock3 size={15}/>{activeCount} working days</span><span><ShieldCheck size={15}/>{onCallCount} on-call days</span></div>
@@ -92,8 +92,8 @@ export default function SchedulesPage() {
       {days.map((day, index) => <section className="weekly-day-card" key={day.dayOfWeek}>
         <div className="weekly-day-heading"><div><strong>{dayNames[day.dayOfWeek]}</strong><small>{day.isWorking ? "Regular shift" : "Day off"}</small></div><label className="switch-label"><input type="checkbox" checked={day.isWorking} onChange={e => update(index, { isWorking: e.target.checked })}/><span className="switch-track"/><span>Working</span></label></div>
         <div className={`weekly-day-fields ${day.isWorking ? "" : "disabled-fields"}`}>
-          <label>Start<input type="time" value={day.startTime} disabled={!day.isWorking} onChange={e => update(index, { startTime: e.target.value })}/></label>
-          <label>End<input type="time" value={day.endTime} disabled={!day.isWorking} onChange={e => update(index, { endTime: e.target.value })}/></label>
+          <label>Start (optional)<input type="time" value={day.startTime} disabled={!day.isWorking} onChange={e => update(index, { startTime: e.target.value })}/></label>
+          <label>End (optional)<input type="time" value={day.endTime} disabled={!day.isWorking} onChange={e => update(index, { endTime: e.target.value })}/></label>
           <label>Break starts<input type="time" value={day.breakStartTime} disabled={!day.isWorking} onChange={e => update(index, { breakStartTime: e.target.value })}/></label>
           <label>Break ends<input type="time" value={day.breakEndTime} disabled={!day.isWorking} onChange={e => update(index, { breakEndTime: e.target.value })}/></label>
         </div>
@@ -101,6 +101,6 @@ export default function SchedulesPage() {
         {day.isOnCall && <div className="oncall-times"><label>On-call starts<input type="time" value={day.onCallStartTime} onChange={e => update(index, { onCallStartTime: e.target.value })}/></label><label>On-call ends<input type="time" value={day.onCallEndTime} onChange={e => update(index, { onCallEndTime: e.target.value })}/></label></div>}
       </section>)}
     </div>}
-    <div className="schedule-footnote"><CalendarClock size={16}/><span>These are recurring weekly hours. Date-specific time off, shift exceptions, appointment conflict checks, and Google Calendar sync will be added in later stages. On-call status does not automatically assign emergency appointments.</span></div>
+    <div className="schedule-footnote"><CalendarClock size={16}/><span>Working days can be left without start/end times to indicate flexible all-day availability. Breaks are advisory and can be overridden by the owner. Actual overlapping jobs and approved time off remain blocked. Date-specific exceptions are managed separately.</span></div>
   </div>;
 }

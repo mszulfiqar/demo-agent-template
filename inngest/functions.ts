@@ -10,15 +10,4 @@ export const testBackgroundJob = inngest.createFunction(
   }))
 );
 
-/** Starts durable processing after owner approval. Calendar/SMS actions await provider setup. */
-export const appointmentApprovedWorkflow = inngest.createFunction(
-  { id: "appointment-approved-workflow", retries: 5, triggers: [{ event: "hvac/appointment.approved" }] },
-  async ({ event, step }) => step.run("record-approval-workflow-started", async () => ({
-    appointmentId: event.data.appointmentId,
-    technicianId: event.data.technicianId,
-    acceptedAt: new Date().toISOString(),
-    nextAction: "calendar_booking_integration_required",
-  }))
-);
-
-export const inngestFunctions = [testBackgroundJob, appointmentApprovedWorkflow];
+export const inngestFunctions = [testBackgroundJob];
