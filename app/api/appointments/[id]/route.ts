@@ -65,9 +65,9 @@ export async function PATCH(request: Request, { params }: Context) {
 
     if (action === "approve") {
       if (current.status !== "pending_approval") return NextResponse.json({ error: "Only requests awaiting owner approval can be approved." }, { status: 409 });
-      const start = current.scheduledStartAt ?? current.requestedStartAt;
-      const end = current.scheduledEndAt ?? current.requestedEndAt;
-      if (!start || !end) return NextResponse.json({ error: "Add an appointment date and time before approval." }, { status: 409 });
+      const start = body.startAt ? new Date(body.startAt) : current.scheduledStartAt ?? current.requestedStartAt;
+      const end = body.endAt ? new Date(body.endAt) : current.scheduledEndAt ?? current.requestedEndAt;
+      if (!(start instanceof Date) || !(end instanceof Date) || !Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end <= start) return NextResponse.json({ error: "Choose a valid appointment start and end time before approval." }, { status: 409 });
       const checked = await checkAssignment(technicianId, id, start, end, current.appointmentType, current.customerAddressId, body.overrideWarnings === true);
       if ("response" in checked) return checked.response;
       const [updated] = await db.update(appointments).set({
