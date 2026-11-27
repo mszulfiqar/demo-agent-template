@@ -61,13 +61,15 @@ export async function POST(request: Request) {
     if (!customerId || !title || !Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end <= start) {
       return NextResponse.json({ error: "Choose a customer, enter a job title, and provide a valid start and end time." }, { status: 400 });
     }
+    const [address] = await db.select().from(customerAddresses).where(eq(customerAddresses.customerId, customerId)).orderBy(desc(customerAddresses.isDefault)).limit(1);
     if (technicianId) {
       const { checkTechnicianAvailability } = await import("@/lib/scheduling");
-      const check = await checkTechnicianAvailability(technicianId, start, end, undefined, appointmentType === "emergency");
+      const requiredSkill = ["repair", "maintenance", "installation"].includes(appointmentType) ? appointmentType : null;
+      const check = await checkTechnicianAvailability(technicianId, start, end, undefined, appointmentType === "emergency", { postalCode: address?.postalCode, requiredSkill });
       if (!check.ok) return NextResponse.json({ error: check.reason }, { status: 409 });
     }
     const [created] = await db.insert(appointments).values({
-      customerId, assignedTechnicianId: technicianId,
+      customerId, customerAddressId: address?.id ?? null, assignedTechnicianId: technicianId,
       requestedStartAt: start, requestedEndAt: end,
       scheduledStartAt: start, scheduledEndAt: end,
       appointmentType, customTitle: title, customDescription: description || null,
