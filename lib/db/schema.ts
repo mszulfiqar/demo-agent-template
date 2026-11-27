@@ -207,7 +207,7 @@ export const appointments = pgTable("appointments", {
   index("appointments_customer_idx").on(table.customerId),
   check("appointments_requested_range_valid", sql`${table.requestedEndAt} IS NULL OR ${table.requestedStartAt} IS NULL OR ${table.requestedEndAt} > ${table.requestedStartAt}`),
   check("appointments_scheduled_range_valid", sql`${table.scheduledEndAt} IS NULL OR ${table.scheduledStartAt} IS NULL OR ${table.scheduledEndAt} > ${table.scheduledStartAt}`),
-  check("appointments_confirmed_requires_assignment", sql`\${table.status} <> 'confirmed' OR (\${table.assignedTechnicianId} IS NOT NULL AND \${table.scheduledStartAt} IS NOT NULL AND \${table.scheduledEndAt} IS NOT NULL)`),
+  check("appointments_confirmed_requires_assignment", sql`${table.status} <> 'confirmed' OR (${table.assignedTechnicianId} IS NOT NULL AND ${table.scheduledStartAt} IS NOT NULL AND ${table.scheduledEndAt} IS NOT NULL)`),
 ]);
 
 export const callEvents = pgTable("call_events", {
