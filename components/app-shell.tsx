@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, CalendarDays, ChevronDown, ClipboardList, LayoutDashboard, PhoneCall, Settings2, Snowflake, Users, Wrench } from "lucide-react";
+import { Activity, CalendarDays, CalendarClock, ChevronDown, ClipboardList, LayoutDashboard, PhoneCall, Settings2, Snowflake, Users, Wrench } from "lucide-react";
 import type { ReactNode } from "react";
 
 const navigation = [
   { label: "Overview", href: "/", icon: LayoutDashboard },
   { label: "Customers", href: "/customers", icon: Users },
   { label: "Technicians", href: "/technicians", icon: Wrench },
+  { label: "Technician schedules", href: "/schedules", icon: CalendarClock },
   { label: "Appointments", href: "/appointments", icon: CalendarDays, count: "3" },
   { label: "Service requests", href: "/service-requests", icon: ClipboardList },
   { label: "Call history", href: "/calls", icon: PhoneCall }
