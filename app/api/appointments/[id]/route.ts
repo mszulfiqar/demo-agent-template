@@ -35,6 +35,7 @@ export async function PATCH(request: Request, { params }: Context) {
         const requiredSkill = ["repair", "maintenance", "installation"].includes(current.appointmentType) ? current.appointmentType : null;
         const check = await checkTechnicianAvailability(technicianId, start, end, id, current.appointmentType === "emergency", { postalCode: address?.postalCode, requiredSkill });
         if (!check.ok) return NextResponse.json({ error: check.reason }, { status: 409 });
+        if (check.warnings.length && body.overrideWarnings !== true) return NextResponse.json({ warnings: check.warnings, requiresOverride: true }, { status: 409 });
       }
       const [updated] = await db.update(appointments).set({ assignedTechnicianId: technicianId, updatedAt: new Date() }).where(eq(appointments.id, id)).returning();
       return NextResponse.json({ appointment: updated });
@@ -51,6 +52,7 @@ export async function PATCH(request: Request, { params }: Context) {
       const requiredSkill = ["repair", "maintenance", "installation"].includes(current.appointmentType) ? current.appointmentType : null;
       const check = await checkTechnicianAvailability(technicianId, start, end, id, current.appointmentType === "emergency", { postalCode: address?.postalCode, requiredSkill });
       if (!check.ok) return NextResponse.json({ error: check.reason }, { status: 409 });
+      if (check.warnings.length && body.overrideWarnings !== true) return NextResponse.json({ warnings: check.warnings, requiresOverride: true }, { status: 409 });
       const [updated] = await db.update(appointments).set({
         assignedTechnicianId: technicianId,
         scheduledStartAt: start,
