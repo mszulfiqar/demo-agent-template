@@ -49,9 +49,9 @@ export async function PUT(request: Request) {
       const breakEndTime = nullableTime(day.breakEndTime);
       const onCallStartTime = nullableTime(day.onCallStartTime);
       const onCallEndTime = nullableTime(day.onCallEndTime);
-      if ((isWorking && (!startTime || !endTime || startTime >= endTime)) ||
+      if ((isWorking && ((!!startTime !== !!endTime) || (!!startTime && !!endTime && startTime >= endTime))) ||
           ((breakStartTime && !breakEndTime) || (!breakStartTime && breakEndTime)) ||
-          (breakStartTime && (breakStartTime <= startTime! || breakEndTime! >= endTime! || breakStartTime >= breakEndTime!)) ||
+          (breakStartTime && (!isWorking || !startTime || !endTime || breakStartTime <= startTime || breakEndTime! >= endTime || breakStartTime >= breakEndTime!)) ||
           (isOnCall && (!onCallStartTime || !onCallEndTime || onCallStartTime >= onCallEndTime))) {
         return NextResponse.json({ error: "Check working hours, break times, and on-call hours. End times must be later than start times." }, { status: 400 });
       }
