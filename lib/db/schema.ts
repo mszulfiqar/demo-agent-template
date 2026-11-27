@@ -70,6 +70,42 @@ export const technicianWeeklySchedules = pgTable("technician_weekly_schedules", 
   check("technician_weekly_schedules_day_valid", sql`${table.dayOfWeek} >= 0 AND ${table.dayOfWeek} <= 6`),
 ]);
 
+export const technicianSkills = pgTable("technician_skills", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  technicianId: uuid("technician_id").notNull().references(() => technicians.id, { onDelete: "cascade" }),
+  skill: text("skill").notNull(),
+  ...timestamps(),
+}, (table) => [
+  unique("technician_skills_technician_skill_unique").on(table.technicianId, table.skill),
+  index("technician_skills_technician_idx").on(table.technicianId),
+]);
+
+export const technicianServiceZipCodes = pgTable("technician_service_zip_codes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  technicianId: uuid("technician_id").notNull().references(() => technicians.id, { onDelete: "cascade" }),
+  postalCode: text("postal_code").notNull(),
+  ...timestamps(),
+}, (table) => [
+  unique("technician_service_zip_codes_technician_zip_unique").on(table.technicianId, table.postalCode),
+  index("technician_service_zip_codes_technician_idx").on(table.technicianId),
+]);
+
+export const technicianScheduleExceptions = pgTable("technician_schedule_exceptions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  technicianId: uuid("technician_id").notNull().references(() => technicians.id, { onDelete: "cascade" }),
+  exceptionType: text("exception_type").notNull(),
+  startAt: timestamp("start_at", { withTimezone: true }).notNull(),
+  endAt: timestamp("end_at", { withTimezone: true }).notNull(),
+  isAvailable: boolean("is_available").notNull().default(false),
+  isOnCall: boolean("is_on_call").notNull().default(false),
+  notes: text("notes"),
+  ...timestamps(),
+}, (table) => [
+  index("technician_schedule_exceptions_technician_date_idx").on(table.technicianId, table.startAt, table.endAt),
+  check("technician_schedule_exceptions_range_valid", sql`${table.endAt} > ${table.startAt}`),
+  check("technician_schedule_exceptions_type_valid", sql`${table.exceptionType} IN ('time_off', 'custom_shift', 'holiday', 'overtime')`),
+]);
+
 export const customers = pgTable("customers", {
   id: uuid("id").primaryKey().defaultRandom(),
   firstName: text("first_name").notNull(),
@@ -160,6 +196,9 @@ export const appointments = pgTable("appointments", {
   rejectionReason: text("rejection_reason"),
   customerConfirmationSentAt: timestamp("customer_confirmation_sent_at", { withTimezone: true }),
   source: text("source").notNull().default("ai_receptionist"),
+  appointmentType: text("appointment_type").notNull().default("repair"),
+  customTitle: text("custom_title"),
+  customDescription: text("custom_description"),
   internalNotes: text("internal_notes"),
   ...timestamps(),
 }, (table) => [
