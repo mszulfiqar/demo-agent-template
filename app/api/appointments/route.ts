@@ -10,6 +10,9 @@ export async function GET() {
     const rows = await db.select({
       id: appointments.id,
       status: appointments.status,
+      appointmentType: appointments.appointmentType,
+      customTitle: appointments.customTitle,
+      customDescription: appointments.customDescription,
       requestedStartAt: appointments.requestedStartAt,
       requestedEndAt: appointments.requestedEndAt,
       scheduledStartAt: appointments.scheduledStartAt,
@@ -41,5 +44,39 @@ export async function GET() {
   } catch (error) {
     console.error("GET /api/appointments failed:", error);
     return NextResponse.json({ error: "Unable to load appointments." }, { status: 500 });
+  }
+}
+
+const allowedTypes = ["repair", "maintenance", "installation", "estimate", "emergency", "other"];
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const customerId = typeof body.customerId === "string" ? body.customerId : "";
+    const technicianId = typeof body.technicianId === "string" && body.technicianId ? body.technicianId : null;
+    const appointmentType = allowedTypes.includes(body.appointmentType) ? body.appointmentType : "repair";
+    const title = typeof body.title === "string" ? body.title.trim().slice(0, 160) : "";
+    const description = typeof body.description === "string" ? body.description.trim().slice(0, 2000) : "";
+    const start = new Date(body.startAt);
+    const end = new Date(body.endAt);
+    if (!customerId || !title || !Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end <= start) {
+      return NextResponse.json({ error: "Choose a customer, enter a job title, and provide a valid start and end time." }, { status: 400 });
+    }
+    if (technicianId) {
+      const { checkTechnicianAvailability } = await import("@/lib/scheduling");
+      const check = await checkTechnicianAvailability(technicianId, start, end, undefined, appointmentType === "emergency");
+      if (!check.ok) return NextResponse.json({ error: check.reason }, { status: 409 });
+    }
+    const [created] = await db.insert(appointments).values({
+      customerId, assignedTechnicianId: technicianId,
+      requestedStartAt: start, requestedEndAt: end,
+      scheduledStartAt: start, scheduledEndAt: end,
+      appointmentType, customTitle: title, customDescription: description || null,
+      status: "pending_approval", calendarStatus: "not_started", source: "manual",
+      internalNotes: typeof body.internalNotes === "string" ? body.internalNotes.trim().slice(0, 2000) || null : null,
+    }).returning();
+    return NextResponse.json({ appointment: created, message: "Appointment request created. It remains pending approval and is not confirmed." }, { status: 201 });
+  } catch (error) {
+    console.error("POST /api/appointments failed:", error);
+    return NextResponse.json({ error: "Unable to create appointment." }, { status: 500 });
   }
 }
