@@ -9,6 +9,12 @@ UPDATE appointments
 SET status = 'pending_approval', calendar_status = 'not_started'
 WHERE status = 'pending_calendar';
 
+-- Keep any legacy confirmed rows missing internal scheduling details in owner review.
+UPDATE appointments
+SET status = 'pending_approval', calendar_status = 'not_started'
+WHERE status = 'confirmed'
+  AND (assigned_technician_id IS NULL OR scheduled_start_at IS NULL OR scheduled_end_at IS NULL);
+
 ALTER TABLE appointments
   ADD CONSTRAINT appointments_confirmed_requires_assignment
   CHECK (
