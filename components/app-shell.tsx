@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, CalendarDays, CalendarClock, ChevronDown, ClipboardList, LayoutDashboard, PhoneCall, Settings2, Snowflake, Users, Wrench } from "lucide-react";
+import { Activity, CalendarDays, CalendarClock, CalendarRange, ShieldCheck, ChevronDown, ClipboardList, LayoutDashboard, PhoneCall, Settings2, Snowflake, Users, Wrench } from "lucide-react";
 import type { ReactNode } from "react";
 
 const navigation = [
@@ -10,6 +10,8 @@ const navigation = [
   { label: "Customers", href: "/customers", icon: Users },
   { label: "Technicians", href: "/technicians", icon: Wrench },
   { label: "Technician schedules", href: "/schedules", icon: CalendarClock },
+  { label: "Coverage & exceptions", href: "/technician-settings", icon: ShieldCheck },
+  { label: "Dispatch calendar", href: "/dispatch", icon: CalendarRange },
   { label: "Appointments", href: "/appointments", icon: CalendarDays, count: "3" },
   { label: "Service requests", href: "/service-requests", icon: ClipboardList },
   { label: "Call history", href: "/calls", icon: PhoneCall }
