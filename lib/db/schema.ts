@@ -50,6 +50,26 @@ export const technicians = pgTable("technicians", {
   ...timestamps(),
 });
 
+// Weekly recurring availability. Times are local wall-clock values for the HVAC business.
+export const technicianWeeklySchedules = pgTable("technician_weekly_schedules", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  technicianId: uuid("technician_id").notNull().references(() => technicians.id, { onDelete: "cascade" }),
+  dayOfWeek: integer("day_of_week").notNull(),
+  isWorking: boolean("is_working").notNull().default(false),
+  startTime: text("start_time"),
+  endTime: text("end_time"),
+  breakStartTime: text("break_start_time"),
+  breakEndTime: text("break_end_time"),
+  isOnCall: boolean("is_on_call").notNull().default(false),
+  onCallStartTime: text("on_call_start_time"),
+  onCallEndTime: text("on_call_end_time"),
+  ...timestamps(),
+}, (table) => [
+  unique("technician_weekly_schedules_technician_day_unique").on(table.technicianId, table.dayOfWeek),
+  index("technician_weekly_schedules_technician_idx").on(table.technicianId),
+  check("technician_weekly_schedules_day_valid", sql`${table.dayOfWeek} >= 0 AND ${table.dayOfWeek} <= 6`),
+]);
+
 export const customers = pgTable("customers", {
   id: uuid("id").primaryKey().defaultRandom(),
   firstName: text("first_name").notNull(),
