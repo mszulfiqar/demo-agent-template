@@ -76,11 +76,25 @@ export default function AppointmentsPage() {
     if (action !== "reject" && !technicianId) { setError("Please assign an active technician first."); return; }
     setBusyId(id); setError(""); setNotice("");
     try {
+      let appointmentTimes: { startAt?: string; endAt?: string } = {};
+      if (action === "approve") {
+        const item = items.find(value => value.id === id);
+        const local = (value: string | null) => value ? new Date(new Date(value).getTime() - new Date(value).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "";
+        const defaultStart = local(item?.scheduledStartAt || item?.requestedStartAt || null);
+        const defaultEnd = local(item?.scheduledEndAt || item?.requestedEndAt || null);
+        const startAt = window.prompt("Choose appointment start (YYYY-MM-DDTHH:mm)", defaultStart);
+        if (!startAt) return;
+        const endAt = window.prompt("Choose appointment end (YYYY-MM-DDTHH:mm)", defaultEnd);
+        if (!endAt) return;
+        const start = new Date(startAt), end = new Date(endAt);
+        if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end <= start) throw new Error("Enter a valid appointment start and end time.");
+        appointmentTimes = { startAt: start.toISOString(), endAt: end.toISOString() };
+      }
       const send = async (overrideWarnings: boolean) => {
         const response = await fetch(`/api/appointments/${id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action, technicianId, overrideWarnings }),
+          body: JSON.stringify({ action, technicianId, ...appointmentTimes, overrideWarnings }),
         });
         return { response, data: await response.json() };
       };
