@@ -41,8 +41,8 @@ export async function PATCH(request: Request, { params }: Context) {
     }
 
     if (action === "approve") {
-      if (current.status !== "pending_approval" && current.status !== "pending_calendar") {
-        return NextResponse.json({ error: "Only requests awaiting approval or calendar processing can be approved." }, { status: 409 });
+      if (current.status !== "pending_approval") {
+        return NextResponse.json({ error: "Only requests awaiting owner approval can be approved." }, { status: 409 });
       }
       const start = current.scheduledStartAt ?? current.requestedStartAt;
       const end = current.scheduledEndAt ?? current.requestedEndAt;
