@@ -401,3 +401,5 @@ tbody tr:hover { background: #fcfdfd; }
 .form-section-label span{font-weight:400;letter-spacing:0;text-transform:none;margin-left:6px}
 .toolbar-actions{display:flex;align-items:center;gap:12px}
 @media(max-width:480px){.customer-form-grid{grid-template-columns:1fr}.toolbar-actions{gap:8px;flex-wrap:wrap}}
+
+.dispatch-card-actions{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.dispatch-card-actions button{border:1px solid #dfe7e9;background:#fff;border-radius:4px;padding:4px 6px;color:#62717b;font-size:8px;cursor:pointer}.dispatch-card-actions button:hover{border-color:#8abbb5;color:#087e80}
