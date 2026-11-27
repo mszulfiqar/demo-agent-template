@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { appointments, technicians } from "@/lib/db/schema";
+import { checkTechnicianAvailability } from "@/lib/scheduling";
 import { inngest } from "@/inngest/client";
 
 export const runtime = "nodejs";
@@ -28,6 +29,12 @@ export async function PATCH(request: Request, { params }: Context) {
 
     if (action === "assign") {
       if (["confirmed", "completed", "rejected", "cancelled"].includes(current.status)) return NextResponse.json({ error: "This appointment can no longer be reassigned." }, { status: 409 });
+      const start = current.scheduledStartAt ?? current.requestedStartAt;
+      const end = current.scheduledEndAt ?? current.requestedEndAt;
+      if (start && end) {
+        const check = await checkTechnicianAvailability(technicianId, start, end, id, current.appointmentType === "emergency");
+        if (!check.ok) return NextResponse.json({ error: check.reason }, { status: 409 });
+      }
       const [updated] = await db.update(appointments).set({ assignedTechnicianId: technicianId, updatedAt: new Date() }).where(eq(appointments.id, id)).returning();
       return NextResponse.json({ appointment: updated });
     }
@@ -35,6 +42,12 @@ export async function PATCH(request: Request, { params }: Context) {
     if (action === "approve") {
       if (current.status !== "pending_approval" && current.status !== "pending_calendar") {
         return NextResponse.json({ error: "Only requests awaiting approval or calendar processing can be approved." }, { status: 409 });
+      }
+      const start = current.scheduledStartAt ?? current.requestedStartAt;
+      const end = current.scheduledEndAt ?? current.requestedEndAt;
+      if (start && end) {
+        const check = await checkTechnicianAvailability(technicianId, start, end, id, current.appointmentType === "emergency");
+        if (!check.ok) return NextResponse.json({ error: check.reason }, { status: 409 });
       }
       const [updated] = current.status === "pending_approval"
         ? await db.update(appointments).set({
