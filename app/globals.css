@@ -388,3 +388,5 @@ tbody tr:hover { background: #fcfdfd; }
 .exception-available,.exception-away{font-size:9px;white-space:nowrap;color:#21865f}.exception-away{color:#bd7550}
 @media(max-width:950px){.dispatch-toolbar{align-items:stretch;flex-direction:column}.dispatch-calendar{grid-template-columns:repeat(2,minmax(0,1fr))}.month-view{grid-template-columns:repeat(7,minmax(90px,1fr));overflow-x:auto}.dispatch-day{min-height:130px}}
 @media(max-width:600px){.dispatch-date-nav{flex-wrap:wrap}.dispatch-date-nav strong{min-width:120px}.dispatch-filters{justify-content:space-between;flex-wrap:wrap}.dispatch-calendar{grid-template-columns:1fr}.month-view{grid-template-columns:repeat(7,minmax(95px,1fr))}.exception-form,.dispatch-form-grid{grid-template-columns:1fr}.exception-item{align-items:flex-start;flex-wrap:wrap}}
+
+.dispatch-assign-select{width:100%;min-width:0;height:25px;border:1px solid #dfe7e9;border-radius:4px;background:#fff;padding:0 4px;color:#64727b;font-size:8px}
