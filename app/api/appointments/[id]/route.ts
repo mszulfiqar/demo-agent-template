@@ -47,10 +47,11 @@ export async function PATCH(request: Request, { params }: Context) {
       }
       const start = current.scheduledStartAt ?? current.requestedStartAt;
       const end = current.scheduledEndAt ?? current.requestedEndAt;
-      if (start && end) {
-        const check = await checkTechnicianAvailability(technicianId, start, end, id, current.appointmentType === "emergency");
-        if (!check.ok) return NextResponse.json({ error: check.reason }, { status: 409 });
-      }
+      if (!start || !end) return NextResponse.json({ error: "Add an appointment date and time before approval." }, { status: 409 });
+      const [address] = current.customerAddressId ? await db.select().from(customerAddresses).where(eq(customerAddresses.id, current.customerAddressId)).limit(1) : [null];
+      const requiredSkill = ["repair", "maintenance", "installation"].includes(current.appointmentType) ? current.appointmentType : null;
+      const check = await checkTechnicianAvailability(technicianId, start, end, id, current.appointmentType === "emergency", { postalCode: address?.postalCode, requiredSkill });
+      if (!check.ok) return NextResponse.json({ error: check.reason }, { status: 409 });
       const [updated] = current.status === "pending_approval"
         ? await db.update(appointments).set({
             assignedTechnicianId: technicianId,
